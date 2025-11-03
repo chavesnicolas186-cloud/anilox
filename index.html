@@ -96,7 +96,7 @@
         button.btn-secondary:hover { background-color: var(--text-dark); }
         button.btn-success { background-color: var(--success); }
         button.btn-success:hover { background-color: #198754; }
-        .btn-small { padding: 6px 12px; font-size: 0.75rem; margin: 0 2px; width: auto; display: inline-block; }
+        .btn-small { padding: 6px 12px; font-size: 0.75rem; margin: 0; width: 100%; }
         
         .table-container {
             overflow-x: auto; border: 1px solid var(--border); border-radius: 8px;
@@ -110,14 +110,17 @@
         th {
             background-color: var(--bg-light); color: var(--text-dark); font-weight: 600;
             font-family: var(--font-primary); text-transform: uppercase; letter-spacing: 0.5px;
-            font-size: 0.75rem; position: sticky; top: 0; z-index: 1;
+            font-size: 0.75rem; position: sticky; top: 0; z-index: 1; cursor: pointer;
         }
+        th .sort-indicator { display: inline-block; margin-left: 8px; opacity: 0.5; }
+        th:hover { background-color: #e9ecef; }
         tr:last-child td { border-bottom: none; }
-        tr:hover { background-color: #f8f9fa; }
+        
         .status-ok { background-color: rgba(var(--success-rgb), 0.05); }
         .status-atencao { background-color: rgba(var(--warning-rgb), 0.1); }
         .status-critico { background-color: rgba(var(--danger-rgb), 0.08); }
-        
+        tr.status-ok:hover, tr.status-atencao:hover, tr.status-critico:hover { background-color: #e9ecef; }
+
         .status-badge {
             padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;
             font-weight: 600; color: var(--text-white); font-family: var(--font-primary);
@@ -126,6 +129,7 @@
         .status-badge.status-ok { background-color: var(--success); }
         .status-badge.status-atencao { background-color: var(--warning); color: var(--text-dark); }
         .status-badge.status-critico { background-color: var(--danger); }
+        .status-badge.status-na { background-color: var(--text-light); }
 
         .modal-overlay {
             display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
@@ -175,19 +179,18 @@
             <button class="nav-tab" onclick="showTab(event,'settingsTab')">Configurações</button>
         </div>
 
-        <!-- TAB ANILOX -->
         <div id="aniloxTab" class="tab-content active">
             <h2>Lista de Anilox</h2>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Nº</th>
-                            <th>BCM Original</th>
-                            <th>BCM Atual</th>
-                            <th>% Vida Útil</th>
-                            <th>Lineatura</th>
-                            <th>Últ. Atividade</th>
+                            <th onclick="sortTable('id')">Nº<span class="sort-indicator"></span></th>
+                            <th onclick="sortTable('bcm_original')">BCM Original<span class="sort-indicator"></span></th>
+                            <th onclick="sortTable('bcm_atual')">BCM Atual<span class="sort-indicator"></span></th>
+                            <th onclick="sortTable('vida_util')">% Vida Útil<span class="sort-indicator"></span></th>
+                            <th onclick="sortTable('lineatura')">Lineatura<span class="sort-indicator"></span></th>
+                            <th onclick="sortTable('ultima_atividade')">Últ. Atividade<span class="sort-indicator"></span></th>
                             <th>Status Volume</th>
                             <th>Status Limpeza</th>
                             <th>Ações</th>
@@ -198,7 +201,6 @@
             </div>
         </div>
 
-        <!-- TAB RELATÓRIO -->
         <div id="reportTab" class="tab-content">
             <h2>Relatório de Frequência de Lavagens</h2>
             <div class="controls-section">
@@ -219,7 +221,6 @@
             </div>
         </div>
 
-        <!-- TAB CONFIGURAÇÕES -->
         <div id="settingsTab" class="tab-content">
             <h2>Configurações de Alerta de Volume</h2>
             <div class="controls-section">
@@ -258,23 +259,20 @@
         </div>
     </div>
 
-    <!-- Modais -->
     <div id="addMeasurementModal" class="modal-overlay"></div>
     <div id="addAniloxModal" class="modal-overlay"></div>
     <div id="chartModal" class="modal-overlay"></div>
     <div id="addWashModal" class="modal-overlay"></div>
 
     <script>
-        // --- SUPABASE CLIENT SETUP ---
         const SUPABASE_URL = 'https://qonapwpnnknvnhvjysjc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbmFwd3Bubmtudm5odmp5c2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDUwMTIsImV4cCI6MjA3NDEyMTAxMn0.DqkQuENorS1cH4mTyyGvWdohfS5ac4AyO3nufrbBf5E';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log("Supabase client inicializado.");
 
-        // --- VARIÁVEIS GLOBAIS ---
         let aniloxData = [];
         let settings = {};
         let chartInstance = null;
+        let currentSort = { column: 'id', direction: 'asc' };
 
         const defaultSettings = {
             attention: 90,
@@ -283,74 +281,39 @@
             washCritical: 7
         };
 
-        // --- CAMADA DE ACESSO A DADOS ---
         const db = {
             fetchAniloxData: async () => {
                 const { data, error } = await supabaseClient.from('anilox').select('*');
-                if (error) {
-                    console.error("Erro ao buscar dados do anilox:", error);
-                    return [];
-                }
+                if (error) { console.error("Erro ao buscar dados do anilox:", error); return []; }
                 return data;
             },
             updateAniloxRecord: async (anilox) => {
-                const { data, error } = await supabaseClient
-                    .from('anilox')
-                    .update(anilox)
-                    .eq('id', anilox.id)
-                    .select(); // Adicionado .select() para retornar o dado e confirmar a operação
-                if (error) {
-                    console.error("Erro ao atualizar anilox:", error);
-                    throw error; // Lança o erro para ser tratado no 'catch'
-                }
+                const { data, error } = await supabaseClient.from('anilox').update(anilox).eq('id', anilox.id).select();
+                if (error) { console.error("Erro ao atualizar anilox:", error); throw error; }
                 return data;
             },
             addAniloxRecord: async (anilox) => {
-                const { data, error } = await supabaseClient
-                    .from('anilox')
-                    .insert(anilox)
-                    .select();
-                if (error) {
-                    console.error("Erro ao adicionar anilox:", error);
-                    throw error;
-                }
+                const { data, error } = await supabaseClient.from('anilox').insert(anilox).select();
+                if (error) { console.error("Erro ao adicionar anilox:", error); throw error; }
                 return data;
             },
             fetchSettings: async () => {
-                const { data, error } = await supabaseClient
-                    .from('settings')
-                    .select('config')
-                    .eq('id', 1)
-                    .single();
-                if (error || !data) {
-                    console.warn("Configurações não encontradas no DB, usando padrão.");
-                    return defaultSettings;
-                }
+                const { data, error } = await supabaseClient.from('settings').select('config').eq('id', 1).single();
+                if (error || !data) { return defaultSettings; }
                 return data.config;
             },
             saveSettings: async (settings) => {
-                const { error } = await supabaseClient
-                    .from('settings')
-                    .upsert({ id: 1, config: settings });
+                const { error } = await supabaseClient.from('settings').upsert({ id: 1, config: settings });
                 if (error) console.error("Erro ao salvar configurações:", error);
             },
             resetAllData: async () => {
-                console.log("Deletando todos os registros...");
-                const { error: aniloxError } = await supabaseClient
-                    .from('anilox')
-                    .delete()
-                    .neq('id', 'dummy_id_to_delete_all');
-                const { error: settingsError } = await supabaseClient
-                    .from('settings')
-                    .delete()
-                    .eq('id', 1);
-
+                const { error: aniloxError } = await supabaseClient.from('anilox').delete().neq('id', 'dummy_id_to_delete_all');
+                const { error: settingsError } = await supabaseClient.from('settings').delete().eq('id', 1);
                 if(aniloxError) console.error("Erro ao deletar anilox:", aniloxError);
                 if(settingsError) console.error("Erro ao deletar settings:", settingsError);
             }
         };
         
-        // --- LÓGICA DAS ABAS ---
         function showTab(evt, tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
@@ -358,11 +321,9 @@
             evt.currentTarget.classList.add('active');
         }
 
-        // --- MODAIS ---
         function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
         function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
 
-        // --- POPULAR CONFIG FORM ---
         function populateSettingsForm(settings) {
             document.getElementById('attentionThreshold').value = settings.attention;
             document.getElementById('criticalThreshold').value = settings.critical;
@@ -370,48 +331,80 @@
             document.getElementById('washCriticalDays').value = settings.washCritical;
         }
 
-        // --- RENDER TABELA ---
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            renderTable();
+        }
+
         function renderTable() {
             const tableBody = document.getElementById('aniloxTableBody');
             tableBody.innerHTML = '';
             
             if (aniloxData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="placeholder">Nenhum anilox cadastrado. Clique em "+ Adicionar Novo Anilox" para começar.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="9" class="placeholder">Nenhum anilox cadastrado.</td></tr>`;
                 return;
             }
 
+            const getSortValue = (anilox, column) => {
+                const latestMeasurement = anilox.historico.length > 0 ? anilox.historico[anilox.historico.length - 1] : { bcmAtual: -1, data: null };
+                const latestWash = anilox.lavagens.length > 0 ? anilox.lavagens.sort().reverse()[0] : null;
+                const lastActivityDateStr = latestWash && (!latestMeasurement.data || new Date(latestWash) > new Date(latestMeasurement.data)) ? latestWash : latestMeasurement.data;
+
+                switch (column) {
+                    case 'id': return isNaN(parseInt(anilox.id, 10)) ? anilox.id : parseInt(anilox.id, 10);
+                    case 'bcm_original': return anilox.bcm_original;
+                    case 'bcm_atual': return latestMeasurement.bcmAtual;
+                    case 'vida_util': return (latestMeasurement.bcmAtual / anilox.bcm_original) * 100;
+                    case 'lineatura': return anilox.lineatura;
+                    case 'ultima_atividade': return lastActivityDateStr ? new Date(lastActivityDateStr) : new Date(0);
+                    default: return anilox.id;
+                }
+            };
+
             const sortedData = [...aniloxData].sort((a, b) => {
-                const idA = parseInt(a.id, 10);
-                const idB = parseInt(b.id, 10);
-                return (isNaN(idA) || isNaN(idB)) ? (''+a.id).localeCompare(''+b.id) : idA - idB;
+                const valA = getSortValue(a, currentSort.column);
+                const valB = getSortValue(b, currentSort.column);
+                
+                if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
             });
+
+            document.querySelectorAll('th .sort-indicator').forEach(el => el.textContent = '');
+            const activeTh = document.querySelector(`th[onclick="sortTable('${currentSort.column}')"] .sort-indicator`);
+            if (activeTh) {
+                activeTh.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+            }
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
             sortedData.forEach(anilox => {
-                // ### ALTERAÇÃO CRÍTICA AQUI! ###
-                // A medição mais recente é a ÚLTIMA do array, não a primeira após ordenar por data.
-                // Isso corrige o bug de múltiplas medições no mesmo dia.
-                const latestMeasurement = anilox.historico.length > 0
-                    ? anilox.historico[anilox.historico.length - 1]
-                    : { bcmAtual: 'N/A', data: null };
-
+                const latestMeasurement = anilox.historico.length > 0 ? anilox.historico[anilox.historico.length - 1] : { bcmAtual: 'N/A', data: null };
                 const life = (latestMeasurement.bcmAtual / anilox.bcm_original) * 100;
 
-                let volStatusClass = 'status-ok', volStatusText = 'OK';
+                let volStatusClass = '';
+                let volStatusBadge = `<span class="status-badge status-na">N/A</span>`;
                 if (!isNaN(life)) {
                     if (life < settings.critical) { 
-                        volStatusClass = 'status-critico'; volStatusText = 'Crítico'; 
+                        volStatusBadge = `<span class="status-badge status-critico">Crítico</span>`;
+                        volStatusClass = 'status-critico';
                     } else if (life < settings.attention) { 
-                        volStatusClass = 'status-atencao'; volStatusText = 'Atenção'; 
+                        volStatusBadge = `<span class="status-badge status-atencao">Atenção</span>`;
+                        volStatusClass = 'status-atencao';
+                    } else {
+                        volStatusBadge = `<span class="status-badge status-ok">OK</span>`;
+                        volStatusClass = 'status-ok';
                     }
                 }
 
                 const latestWash = anilox.lavagens.length > 0 ? anilox.lavagens.sort().reverse()[0] : null;
-                const lastActivityDateStr = latestWash && (!latestMeasurement.data || new Date(latestWash) > new Date(latestMeasurement.data))
-                    ? latestWash
-                    : latestMeasurement.data;
+                const lastActivityDateStr = latestWash && (!latestMeasurement.data || new Date(latestWash) > new Date(latestMeasurement.data)) ? latestWash : latestMeasurement.data;
 
                 let washStatusBadge = `<span class="status-badge status-ok">OK</span>`;
                 let lastActivityDateFormatted = "N/A";
@@ -419,9 +412,7 @@
                 if (lastActivityDateStr) {
                     const lastActivityDate = new Date(lastActivityDateStr);
                     lastActivityDate.setUTCHours(12,0,0,0);
-
                     lastActivityDateFormatted = lastActivityDate.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-
                     const diffTime = today - lastActivityDate;
                     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
@@ -441,19 +432,20 @@
                     <td>${!isNaN(life) ? life.toFixed(1) + '%' : 'N/A'}</td>
                     <td>${anilox.lineatura}</td>
                     <td>${lastActivityDateFormatted}</td>
-                    <td>${volStatusText}</td>
+                    <td>${volStatusBadge}</td>
                     <td>${washStatusBadge}</td>
                     <td>
-                        <button class="btn-small btn-success" onclick="openWashModal('${anilox.id}')">Lavar</button>
-                        <button class="btn-small btn-info" onclick="openMeasurementModal('${anilox.id}')">Medir</button>
-                        <button class="btn-small btn-secondary" onclick="showChart('${anilox.id}')">Histórico</button>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
+                            <button class="btn-small btn-success" onclick="openWashModal('${anilox.id}')">Lavar</button>
+                            <button class="btn-small btn-info" onclick="openMeasurementModal('${anilox.id}')">Medir</button>
+                        </div>
+                        <button class="btn-small btn-secondary" style="width: 100%;" onclick="showChart('${anilox.id}')">Histórico</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
         }
 
-        // --- RELATÓRIO DE LAVAGEM ---
         function generateWashReport() {
             const startDateStr = document.getElementById('startDate').value;
             const endDateStr = document.getElementById('endDate').value;
@@ -483,17 +475,7 @@
                 return;
             }
 
-            let tableHTML = `
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nº do Anilox</th>
-                                <th>Nº de Lavagens no Período</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
+            let tableHTML = `<div class="table-container"><table><thead><tr><th>Nº do Anilox</th><th>Nº de Lavagens no Período</th></tr></thead><tbody>`;
             reportData.forEach(item => {
                 tableHTML += `<tr><td>${item.id}</td><td>${item.count}</td></tr>`;
             });
@@ -501,7 +483,6 @@
             resultsDiv.innerHTML = tableHTML;
         }
 
-        // --- MODAL LAVAGEM ---
         function openWashModal(id) {
             document.getElementById('washAniloxId').value = id;
             document.getElementById('modalWashAniloxId').textContent = id;
@@ -509,7 +490,6 @@
             openModal('addWashModal');
         }
 
-        // --- MODAL MEDIÇÃO ---
         function openMeasurementModal(id) {
             document.getElementById('measurementAniloxId').value = id;
             document.getElementById('modalAniloxId').textContent = id;
@@ -518,7 +498,6 @@
             openModal('addMeasurementModal');
         }
 
-        // --- GRÁFICO HISTÓRICO ---
         function showChart(id) {
             const anilox = aniloxData.find(a => a.id === id);
             if (!anilox) return;
@@ -526,9 +505,7 @@
             const sortedHistory = [...anilox.historico].sort((a, b) => new Date(a.data) - new Date(b.data));
             const labels = sortedHistory.map(h => new Date(h.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'}));
             const dataPoints = sortedHistory.map(h => h.bcmAtual);
-
             const criticalThresholdValue = anilox.bcm_original * (settings.critical / 100);
-
             const ctx = document.getElementById('aniloxChart').getContext('2d');
             if (chartInstance) { chartInstance.destroy(); }
 
@@ -537,158 +514,32 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        {
-                            label: 'BCM Atual',
-                            data: dataPoints,
-                            borderColor: 'var(--primary)',
-                            backgroundColor: 'rgba(36, 99, 235, 0.1)',
-                            tension: 0.1,
-                            fill: true
-                        },
-                        {
-                            label: 'BCM Original',
-                            data: Array(labels.length).fill(anilox.bcm_original),
-                            borderColor: 'var(--success)',
-                            borderDash: [5, 5],
-                            pointRadius: 0,
-                            fill: false
-                        },
-                        {
-                            label: 'Limite Crítico',
-                            data: Array(labels.length).fill(criticalThresholdValue),
-                            borderColor: 'var(--danger)',
-                            borderDash: [5, 5],
-                            pointRadius: 0,
-                            fill: false
-                        }
+                        { label: 'BCM Atual', data: dataPoints, borderColor: 'var(--primary)', backgroundColor: 'rgba(36, 99, 235, 0.1)', tension: 0.1, fill: true },
+                        { label: 'BCM Original', data: Array(labels.length).fill(anilox.bcm_original), borderColor: 'var(--success)', borderDash: [5, 5], pointRadius: 0, fill: false },
+                        { label: 'Limite Crítico', data: Array(labels.length).fill(criticalThresholdValue), borderColor: 'var(--danger)', borderDash: [5, 5], pointRadius: 0, fill: false }
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `Histórico de Volume do Anilox Nº ${anilox.id}`,
-                            font: { family: 'var(--font-primary)', size: 16 }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            title: { display: true, text: 'Volume (BCM)' }
-                        }
-                    }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: `Histórico de Volume do Anilox Nº ${anilox.id}`, font: { family: 'var(--font-primary)', size: 16 } } },
+                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Volume (BCM)' } } }
                 }
             });
-
             document.getElementById('chartModalTitle').innerText = `Histórico do Anilox Nº ${anilox.id}`;
             openModal('chartModal');
         }
 
-        // --- INICIALIZAÇÃO ---
         async function initializeApp() {
-            // montar estrutura interna dos modais dinamicamente
-            document.getElementById('addWashModal').innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Registrar Lavagem para Anilox Nº <span id="modalWashAniloxId"></span></h2>
-                        <span class="close-button" onclick="closeModal('addWashModal')">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        <form id="addWashForm">
-                            <input type="hidden" id="washAniloxId">
-                            <div class="input-group">
-                                <label for="washDate">Data da Lavagem</label>
-                                <input type="date" id="washDate" required>
-                            </div>
-                            <button type="submit">Salvar Lavagem</button>
-                        </form>
-                    </div>
-                </div>`;
+            document.getElementById('addWashModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Registrar Lavagem para Anilox Nº <span id="modalWashAniloxId"></span></h2><span class="close-button" onclick="closeModal('addWashModal')">&times;</span></div><div class="modal-body"><form id="addWashForm"><input type="hidden" id="washAniloxId"><div class="input-group"><label for="washDate">Data da Lavagem</label><input type="date" id="washDate" required></div><button type="submit">Salvar Lavagem</button></form></div></div>`;
+            document.getElementById('addMeasurementModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Adicionar Medição para Anilox Nº <span id="modalAniloxId"></span></h2><span class="close-button" onclick="closeModal('addMeasurementModal')">&times;</span></div><div class="modal-body"><form id="addMeasurementForm"><input type="hidden" id="measurementAniloxId"><div class="input-group"><label for="bcmAtualInput">Novo BCM Atual</label><input type="number" step="0.1" id="bcmAtualInput" required></div><div class="input-group"><label for="measurementDate">Data da Medição</label><input type="date" id="measurementDate" required></div><button type="submit">Salvar Medição</button></form></div></div>`;
+            document.getElementById('addAniloxModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Adicionar Novo Anilox</h2><span class="close-button" onclick="closeModal('addAniloxModal')">&times;</span></div><div class="modal-body"><form id="addAniloxForm"><div class="input-group"><label for="newAniloxId">Nº do Anilox</label><input type="text" id="newAniloxId" required></div><div class="input-group"><label for="newBcmOriginal">BCM Original</label><input type="number" step="0.1" id="newBcmOriginal" required></div><div class="input-group"><label for="newLineatura">Lineatura</label><input type="text" id="newLineatura" required></div><hr><p>Primeira medição:</p><div class="input-group"><label for="newBcmAtual">BCM Atual</label><input type="number" step="0.1" id="newBcmAtual" required></div><div class="input-group"><label for="newMeasurementDate">Data da Medição</label><input type="date" id="newMeasurementDate" required></div><button type="submit">Salvar Novo Anilox</button></form></div></div>`;
+            document.getElementById('chartModal').innerHTML = `<div class="modal-content modal-xl"><div class="modal-header"><h2 id="chartModalTitle">Histórico do Anilox</h2><span class="close-button" onclick="closeModal('chartModal')">&times;</span></div><div class="modal-body"><div id="chart-container"><canvas id="aniloxChart"></canvas></div></div>`;
 
-            document.getElementById('addMeasurementModal').innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Adicionar Medição para Anilox Nº <span id="modalAniloxId"></span></h2>
-                        <span class="close-button" onclick="closeModal('addMeasurementModal')">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        <form id="addMeasurementForm">
-                            <input type="hidden" id="measurementAniloxId">
-                            <div class="input-group">
-                                <label for="bcmAtualInput">Novo BCM Atual</label>
-                                <input type="number" step="0.1" id="bcmAtualInput" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="measurementDate">Data da Medição</label>
-                                <input type="date" id="measurementDate" required>
-                            </div>
-                            <button type="submit">Salvar Medição</button>
-                        </form>
-                    </div>
-                </div>`;
-
-            document.getElementById('addAniloxModal').innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Adicionar Novo Anilox</h2>
-                        <span class="close-button" onclick="closeModal('addAniloxModal')">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        <form id="addAniloxForm">
-                            <div class="input-group">
-                                <label for="newAniloxId">Nº do Anilox</label>
-                                <input type="text" id="newAniloxId" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="newBcmOriginal">BCM Original</label>
-                                <input type="number" step="0.1" id="newBcmOriginal" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="newLineatura">Lineatura</label>
-                                <input type="text" id="newLineatura" required>
-                            </div>
-
-                            <hr>
-                            <p>Primeira medição:</p>
-
-                            <div class="input-group">
-                                <label for="newBcmAtual">BCM Atual</label>
-                                <input type="number" step="0.1" id="newBcmAtual" required>
-                            </div>
-
-                            <div class="input-group">
-                                <label for="newMeasurementDate">Data da Medição</label>
-                                <input type="date" id="newMeasurementDate" required>
-                            </div>
-
-                            <button type="submit">Salvar Novo Anilox</button>
-                        </form>
-                    </div>
-                </div>`;
-
-            document.getElementById('chartModal').innerHTML = `
-                <div class="modal-content modal-xl">
-                    <div class="modal-header">
-                        <h2 id="chartModalTitle">Histórico do Anilox</h2>
-                        <span class="close-button" onclick="closeModal('chartModal')">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        <div id="chart-container">
-                            <canvas id="aniloxChart"></canvas>
-                        </div>
-                    </div>
-                </div>`;
-
-            // carrega settings e dados
             settings = await db.fetchSettings();
             aniloxData = await db.fetchAniloxData();
-
             populateSettingsForm(settings);
             renderTable();
 
-            // listeners:
             document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
                 settings = {
                     attention: parseFloat(document.getElementById('attentionThreshold').value),
@@ -723,9 +574,7 @@
                         renderTable();
                         closeModal('addWashModal');
                         e.target.reset();
-                    } catch (error) {
-                        alert("Falha ao salvar a lavagem. Verifique o console para mais detalhes.");
-                    }
+                    } catch (error) { alert("Falha ao salvar a lavagem."); }
                 }
             });
 
@@ -743,8 +592,8 @@
                         closeModal('addMeasurementModal');
                         e.target.reset();
                     } catch (error) {
-                        alert("Falha ao salvar a medição. Verifique o console para mais detalhes.");
-                        anilox.historico.pop(); // Reverte a adição local se a gravação falhar
+                        alert("Falha ao salvar a medição.");
+                        anilox.historico.pop();
                     }
                 }
             });
@@ -752,39 +601,28 @@
             document.getElementById('addAniloxForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('newAniloxId').value;
-
                 if (aniloxData.some(a => a.id === id)) {
                     alert(`Erro: O anilox com Nº ${id} já existe.`);
                     return;
                 }
-
                 const newAnilox = {
                     id: id,
                     bcm_original: parseFloat(document.getElementById('newBcmOriginal').value),
                     lineatura: document.getElementById('newLineatura').value,
-                    historico: [{
-                        data: document.getElementById('newMeasurementDate').value,
-                        bcmAtual: parseFloat(document.getElementById('newBcmAtual').value)
-                    }],
+                    historico: [{ data: document.getElementById('newMeasurementDate').value, bcmAtual: parseFloat(document.getElementById('newBcmAtual').value) }],
                     lavagens: []
                 };
-
                 try {
                     await db.addAniloxRecord(newAnilox);
                     aniloxData.push(newAnilox);
                     renderTable();
                     closeModal('addAniloxModal');
                     e.target.reset();
-                } catch (error) {
-                    alert("Falha ao adicionar novo anilox. Verifique o console para mais detalhes.");
-                }
+                } catch (error) { alert("Falha ao adicionar novo anilox."); }
             });
 
-            // fechar modal clicando fora
             document.querySelectorAll('.modal-overlay').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) closeModal(modal.id);
-                });
+                modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); });
             });
         }
 

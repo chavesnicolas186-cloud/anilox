@@ -68,10 +68,10 @@
             display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px; align-items: flex-end;
         }
-        .input-group { display: flex; flex-direction: column; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
         label {
             font-family: var(--font-mono); font-weight: 500; font-size: 0.8rem;
-            color: var(--text-light); margin-bottom: 8px; text-transform: uppercase;
+            color: var(--text-light); text-transform: uppercase;
         }
         input[type="text"], input[type="number"], input[type="date"], textarea {
             padding: 12px 15px; border: 1px solid var(--border); border-radius: 6px;
@@ -113,7 +113,7 @@
             font-family: var(--font-primary); text-transform: uppercase; letter-spacing: 0.5px;
             font-size: 0.75rem; position: sticky; top: 0; z-index: 1; cursor: pointer;
         }
-        th .sort-indicator { display: inline-block; margin-left: 8px; opacity: 0.5; }
+        th .sort-indicator { display: inline-block; margin-left: 8px; opacity: 0.7; width: 1em; }
 
         .status-badge {
             padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;
@@ -174,14 +174,14 @@
             border: 1px solid var(--border); grid-column: 1 / -1; margin-top: 15px;
         }
         .weekly-progress-container {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px;
             text-align: center; margin-top: 10px;
         }
         .day-progress-item {
             background-color: var(--bg-light); padding: 15px; border-radius: 8px;
         }
         .day-label {
-            font-weight: 600; color: var(--text-dark); font-size: 0.9rem;
+            font-weight: 600; color: var(--text-dark); font-size: 0.9rem; text-transform: capitalize;
         }
         .day-progress {
             font-weight: 700; font-size: 1.5rem; margin-top: 8px; font-family: var(--font-mono);
@@ -214,17 +214,23 @@
 
         <div id="aniloxTab" class="tab-content">
             <h2>Lista de Anilox</h2>
+            <div class="controls-section" style="padding: 15px; margin-bottom: 15px; background-color: #fff;">
+                <div class="input-group">
+                    <label for="searchInput">Pesquisar Anilox (por Nº)</label>
+                    <input type="text" id="searchInput" placeholder="Digite o número do anilox para filtrar...">
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th onclick="sortTable('id')">Nº<span class="sort-indicator"></span></th>
-                            <th onclick="sortTable('bcm_original')">BCM Original<span class="sort-indicator"></span></th>
-                            <th onclick="sortTable('bcm_atual')">BCM Atual<span class="sort-indicator"></span></th>
-                            <th onclick="sortTable('vida_util')">% Vida Útil<span class="sort-indicator"></span></th>
-                            <th onclick="sortTable('lineatura')">Lineatura<span class="sort-indicator"></span></th>
-                            <th onclick="sortTable('estado')">Estado<span class="sort-indicator"></span></th>
-                            <th onclick="sortTable('ultima_atividade')">Últ. Atividade<span class="sort-indicator"></span></th>
+                            <th onclick="render.sortTable('id')">Nº<span class="sort-indicator"></span></th>
+                            <th onclick="render.sortTable('bcm_original')">BCM Original<span class="sort-indicator"></span></th>
+                            <th onclick="render.sortTable('bcm_atual')">BCM Atual<span class="sort-indicator"></span></th>
+                            <th onclick="render.sortTable('vida_util')">% Vida Útil<span class="sort-indicator"></span></th>
+                            <th onclick="render.sortTable('lineatura')">Lineatura<span class="sort-indicator"></span></th>
+                            <th onclick="render.sortTable('estado')">Estado<span class="sort-indicator"></span></th>
+                            <th onclick="render.sortTable('ultima_atividade')">Últ. Atividade<span class="sort-indicator"></span></th>
                             <th>Status Volume</th>
                             <th>Status Limpeza</th>
                             <th>Ações</th>
@@ -350,7 +356,12 @@
                 document.getElementById('washCriticalDays').value = s.washCritical;
             },
             sortTable: (column) => {
-                currentSort.column = column === currentSort.column ? (currentSort.direction === 'asc' ? 'desc' : 'asc') : 'asc';
+                if (currentSort.column === column) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = column;
+                    currentSort.direction = 'asc';
+                }
                 render.table();
             },
             dashboard: () => {
@@ -361,7 +372,7 @@
                 }
 
                 const today = new Date();
-                today.setUTCHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
                 const dailyWashGoal = 8;
                 
                 let criticalVolumeCount = 0;
@@ -370,10 +381,19 @@
                 let measuredCount = 0;
                 
                 const weeklyWashCounts = new Map();
+                const dayLabels = [];
+
                 for (let i = 6; i >= 0; i--) {
                     const date = new Date(today);
                     date.setDate(today.getDate() - i);
-                    weeklyWashCounts.set(date.toISOString().slice(0, 10), 0);
+                    const dateString = date.toISOString().slice(0, 10);
+                    weeklyWashCounts.set(dateString, 0);
+                    
+                    let label;
+                    if (i === 0) label = 'Hoje';
+                    else if (i === 1) label = 'Ontem';
+                    else label = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+                    dayLabels.push({ dateString, label });
                 }
 
                 aniloxData.forEach(a => {
@@ -387,9 +407,8 @@
 
                     const latestWash = a.lavagens.length > 0 ? a.lavagens.sort().reverse()[0] : null;
                     if (latestWash) {
-                        const lastActivityDate = new Date(latestWash);
-                        lastActivityDate.setUTCHours(0,0,0,0);
-                        if (Math.floor((today - lastActivityDate) / 86400000) >= settings.washCritical) {
+                        const lastWashDate = new Date(latestWash + 'T12:00:00Z'); // Treat as UTC noon
+                        if (Math.floor((today - lastWashDate) / 86400000) >= settings.washCritical) {
                             criticalCleaningCount++;
                         }
                     }
@@ -404,22 +423,16 @@
                 const avgLife = measuredCount > 0 ? (totalLife / measuredCount).toFixed(1) : 'N/A';
                 
                 let weeklyProgressHTML = '';
-                let dayIndex = 0;
-                for (const [dateString, count] of weeklyWashCounts) {
-                    const date = new Date(dateString);
-                    let label = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-                    if (dayIndex === 6) label = 'Hoje';
-                    if (dayIndex === 5) label = 'Ontem';
-                    
+                dayLabels.forEach(({ dateString, label }) => {
+                    const count = weeklyWashCounts.get(dateString) || 0;
                     const goalMetClass = count >= dailyWashGoal ? 'goal-met' : 'goal-not-met';
                     weeklyProgressHTML += `
                         <div class="day-progress-item">
-                            <div class="day-label">${label.replace('.', '')}</div>
+                            <div class="day-label">${label}</div>
                             <div class="day-progress ${goalMetClass}">${count} / ${dailyWashGoal}</div>
                         </div>
                     `;
-                    dayIndex++;
-                }
+                });
                 
                 grid.innerHTML = `
                     <div class="kpi-card" style="border-color: var(--primary);">
@@ -450,8 +463,16 @@
             },
             table: () => {
                 const tableBody = document.getElementById('aniloxTableBody');
-                tableBody.innerHTML = aniloxData.length === 0 ? `<tr><td colspan="10" class="placeholder">Nenhum anilox cadastrado.</td></tr>` : '';
-                if(aniloxData.length === 0) return;
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+                const filteredData = searchTerm
+                    ? aniloxData.filter(a => a.id.toLowerCase().includes(searchTerm))
+                    : [...aniloxData];
+
+                if (filteredData.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="10" class="placeholder">${searchTerm ? 'Nenhum anilox encontrado.' : 'Nenhum anilox cadastrado.'}</td></tr>`;
+                    return;
+                }
 
                 const getSortValue = (a, col) => {
                     const lm = a.historico.length > 0 ? a.historico.slice().sort((d1, d2) => new Date(d2.data) - new Date(d1.data))[0] : { bcmAtual: -1, data: null };
@@ -467,18 +488,22 @@
                     }
                 };
 
-                const sortedData = [...aniloxData].sort((a, b) => {
+                const sortedData = filteredData.sort((a, b) => {
                     const valA = getSortValue(a, currentSort.column);
                     const valB = getSortValue(b, currentSort.column);
-                    return currentSort.direction === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+                    if (typeof valA === 'string') {
+                        return currentSort.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    }
+                    return currentSort.direction === 'asc' ? valA - valB : valB - valA;
                 });
 
                 document.querySelectorAll('th .sort-indicator').forEach(el => el.textContent = '');
-                const activeTh = document.querySelector(`th[onclick="sortTable('${currentSort.column}')"] .sort-indicator`);
+                const activeTh = document.querySelector(`th[onclick="render.sortTable('${currentSort.column}')"] .sort-indicator`);
                 if (activeTh) activeTh.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
 
                 const today = new Date();
-                today.setUTCHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+                tableBody.innerHTML = '';
 
                 sortedData.forEach(anilox => {
                     const latestMeasurement = anilox.historico.length > 0 ? anilox.historico.slice().sort((d1, d2) => new Date(d2.data) - new Date(d1.data))[0] : { bcmAtual: 'N/A', data: null };
@@ -495,8 +520,7 @@
                     let washStatusBadge = `<span class="status-badge status-ok">OK</span>`, lastActivityDateFormatted = "N/A";
 
                     if (lastActivityDateStr) {
-                        const lastActivityDate = new Date(lastActivityDateStr);
-                        lastActivityDate.setUTCHours(12,0,0,0);
+                        const lastActivityDate = new Date(lastActivityDateStr + 'T12:00:00Z'); // Treat as UTC noon for consistency
                         lastActivityDateFormatted = lastActivityDate.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
                         const diffDays = Math.floor((today - lastActivityDate) / 86400000);
                         if (diffDays >= settings.washCritical) washStatusBadge = `<span class="status-badge status-critico">Crítico (${diffDays}d)</span>`;
@@ -516,7 +540,7 @@
                                 <button class="btn-small" style="background-color: var(--primary);" onclick="openMeasurementModal('${anilox.id}')">Medir</button>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-                                <button class="btn-small" onclick="openEditModal('${anilox.id}')">Editar</button>
+                                <button class="btn-small" onclick="openEditModal('${anilox.id}')">Estado</button>
                                 <button class="btn-small" style="background-color: var(--text-light);" onclick="showChart('${anilox.id}')">Histórico</button>
                             </div>
                         </td>`;
@@ -545,8 +569,8 @@
             if (!anilox) return;
             document.getElementById('editAniloxId').value = anilox.id;
             document.getElementById('modalEditAniloxId').textContent = anilox.id;
-            document.getElementById('editBcmOriginal').value = anilox.bcm_original;
-            document.getElementById('editLineatura').value = anilox.lineatura;
+            document.getElementById('editBcmOriginalDisplay').textContent = anilox.bcm_original;
+            document.getElementById('editLineaturaDisplay').textContent = anilox.lineatura;
             document.getElementById('editEstado').value = anilox.estado || '';
             ui.openModal('editAniloxModal');
         }
@@ -561,7 +585,7 @@
                 { label: 'Limite Crítico', data: Array(sortedHistory.length).fill(anilox.bcm_original * (settings.critical / 100)), borderColor: 'var(--danger)', borderDash: [5, 5], pointRadius: 0, fill: false }
             ];
             document.getElementById('chartModalTitle').innerText = `Histórico de Volume do Anilox Nº ${anilox.id}`;
-            render.createChart('aniloxChart', 'line', sortedHistory.map(h => new Date(h.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'})), datasets);
+            render.createChart('aniloxChart', 'line', sortedHistory.map(h => new Date(h.data + 'T12:00:00Z').toLocaleDateString('pt-BR', {timeZone: 'UTC'})), datasets);
             ui.openModal('chartModal');
         }
 
@@ -570,34 +594,38 @@
             const endDateStr = document.getElementById('endDate').value;
             if (!startDateStr || !endDateStr) return ui.showToast('Selecione as datas de início e fim.', 'error');
 
-            const startUTC = new Date(startDateStr); startUTC.setUTCHours(0,0,0,0);
-            const endUTC = new Date(endDateStr); endUTC.setUTCHours(23,59,59,999);
+            const startUTC = new Date(startDateStr + 'T00:00:00Z');
+            const endUTC = new Date(endDateStr + 'T23:59:59Z');
             const resultsDiv = document.getElementById('reportResults');
 
             const reportData = aniloxData.map(anilox => {
                 const sortedHistory = anilox.historico.slice().sort((a,b) => new Date(a.data) - new Date(b.data));
-                const washesInPeriod = anilox.lavagens.filter(w => { const d = new Date(w); return d >= startUTC && d <= endUTC; }).length;
-                const measurementsInPeriod = sortedHistory.filter(h => { const d = new Date(h.data); return d >= startUTC && d <= endUTC; });
-                if (washesInPeriod === 0 && measurementsInPeriod.length === 0) return null;
+                const washesInPeriod = anilox.lavagens.filter(w => { const d = new Date(w + 'T12:00:00Z'); return d >= startUTC && d <= endUTC; });
+                const measurementsInPeriod = sortedHistory.filter(h => { const d = new Date(h.data + 'T12:00:00Z'); return d >= startUTC && d <= endUTC; });
+                
+                if (washesInPeriod.length === 0 && measurementsInPeriod.length === 0) return null;
 
-                const lastMeasurementBefore = sortedHistory.filter(h => new Date(h.data) < startUTC).pop();
+                const lastWashInPeriod = washesInPeriod.length > 0 ? washesInPeriod.sort().pop() : null;
+                const lastMeasurementBefore = sortedHistory.filter(h => new Date(h.data + 'T12:00:00Z') < startUTC).pop();
                 const initialBCM = measurementsInPeriod[0]?.bcmAtual || lastMeasurementBefore?.bcmAtual;
                 const finalBCM = measurementsInPeriod.length > 0 ? measurementsInPeriod[measurementsInPeriod.length - 1].bcmAtual : initialBCM;
                 const loss = (initialBCM && finalBCM) ? initialBCM - finalBCM : 0;
-                return { id: anilox.id, washCount: washesInPeriod, measurementCount: measurementsInPeriod.length, initialBCM, finalBCM, loss };
+                
+                return { id: anilox.id, washCount: washesInPeriod.length, lastWashDate: lastWashInPeriod, measurementCount: measurementsInPeriod.length, initialBCM, finalBCM, loss };
             }).filter(Boolean);
 
-            resultsDiv.innerHTML = `<h3 style="margin-bottom: 15px;">Análise de ${startUTC.toLocaleDateString()} a ${endUTC.toLocaleDateString()}</h3>`;
+            resultsDiv.innerHTML = `<h3 style="margin-bottom: 15px;">Análise de ${startUTC.toLocaleDateString('pt-BR', {timeZone: 'UTC'})} a ${endUTC.toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</h3>`;
             if (reportData.length === 0) {
                 resultsDiv.innerHTML += `<p class="placeholder">Nenhuma atividade registrada no período.</p>`;
                 return;
             }
             let tableHTML = `<div class="table-container"><table><thead><tr>
-                <th>Nº Anilox</th><th>Lavagens</th><th>Medições</th><th>Volume Inicial</th><th>Volume Final</th><th>Perda de Volume</th>
+                <th>Nº Anilox</th><th>Lavagens</th><th>Última Lavagem no Período</th><th>Medições</th><th>Volume Inicial</th><th>Volume Final</th><th>Perda de Volume</th>
             </tr></thead><tbody>`;
             reportData.forEach(item => {
+                const lastWashFormatted = item.lastWashDate ? new Date(item.lastWashDate + 'T12:00:00Z').toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'N/A';
                 tableHTML += `<tr>
-                    <td><strong>${item.id}</strong></td> <td>${item.washCount}</td> <td>${item.measurementCount}</td>
+                    <td><strong>${item.id}</strong></td> <td>${item.washCount}</td> <td>${lastWashFormatted}</td> <td>${item.measurementCount}</td>
                     <td>${item.initialBCM?.toFixed(2) || 'N/A'}</td> <td>${item.finalBCM?.toFixed(2) || 'N/A'}</td>
                     <td style="color:${item.loss > 0 ? 'var(--danger)' : 'var(--success)'}; font-weight: 600;">${item.loss.toFixed(2)}</td>
                 </tr>`;
@@ -610,15 +638,17 @@
             document.getElementById('addMeasurementModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Adicionar Medição (Nº <span id="modalAniloxId"></span>)</h2><span class="close-button" onclick="ui.closeModal('addMeasurementModal')">&times;</span></div><form id="addMeasurementForm" class="modal-body"><input type="hidden" id="measurementAniloxId"><div class="input-group"><label for="bcmAtualInput">Novo BCM</label><input type="number" step="0.1" id="bcmAtualInput" required></div><div class="input-group"><label for="measurementDate">Data</label><input type="date" id="measurementDate" required></div><button type="submit">Salvar</button></form></div>`;
             document.getElementById('addAniloxModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Adicionar Anilox</h2><span class="close-button" onclick="ui.closeModal('addAniloxModal')">&times;</span></div><form id="addAniloxForm" class="modal-body"><div class="input-group"><label for="newAniloxId">Nº</label><input type="text" id="newAniloxId" required></div><div class="input-group"><label for="newBcmOriginal">BCM Original</label><input type="number" step="0.1" id="newBcmOriginal" required></div><div class="input-group"><label for="newLineatura">Lineatura</label><input type="text" id="newLineatura" required></div><div class="input-group"><label for="newEstado">Estado</label><textarea id="newEstado" placeholder="Arranhões, manchas, etc."></textarea></div><hr><p>Primeira medição:</p><div class="input-group"><label for="newBcmAtual">BCM Atual</label><input type="number" step="0.1" id="newBcmAtual" required></div><div class="input-group"><label for="newMeasurementDate">Data Medição</label><input type="date" id="newMeasurementDate" required></div><button type="submit">Salvar</button></form></div>`;
             document.getElementById('chartModal').innerHTML = `<div class="modal-content modal-xl"><div class="modal-header"><h2 id="chartModalTitle">Histórico</h2><span class="close-button" onclick="ui.closeModal('chartModal')">&times;</span></div><div class="modal-body" id="chart-container"><canvas id="aniloxChart"></canvas></div></div>`;
-            document.getElementById('editAniloxModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Editar Anilox Nº <span id="modalEditAniloxId"></span></h2><span class="close-button" onclick="ui.closeModal('editAniloxModal')">&times;</span></div><form id="editAniloxForm" class="modal-body"><input type="hidden" id="editAniloxId"><div class="input-group"><label for="editBcmOriginal">BCM Original</label><input type="number" step="0.1" id="editBcmOriginal" required></div><div class="input-group"><label for="editLineatura">Lineatura</label><input type="text" id="editLineatura" required></div><div class="input-group"><label for="editEstado">Estado</label><textarea id="editEstado"></textarea></div><button type="submit">Salvar</button></form></div>`;
+            document.getElementById('editAniloxModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Estado do Anilox Nº <span id="modalEditAniloxId"></span></h2><span class="close-button" onclick="ui.closeModal('editAniloxModal')">&times;</span></div><form id="editAniloxForm" class="modal-body"><input type="hidden" id="editAniloxId"><div class="input-group"><label>BCM Original</label><p id="editBcmOriginalDisplay" style="font-family: var(--font-mono); padding: 10px; background-color: var(--bg-light); border-radius: 6px;"></p></div><div class="input-group"><label>Lineatura</label><p id="editLineaturaDisplay" style="font-family: var(--font-mono); padding: 10px; background-color: var(--bg-light); border-radius: 6px;"></p></div><div class="input-group"><label for="editEstado">Descrição do Estado</label><textarea id="editEstado" placeholder="Descreva o estado atual do anilox (arranhões, manchas, etc.)"></textarea></div><button type="submit">Salvar Estado</button></form></div>`;
             
             [settings, aniloxData] = await Promise.all([db.fetchSettings(), db.fetchAniloxData()]);
             render.populateSettingsForm(settings);
             render.all();
 
             window.showTab = ui.showTab; window.openModal = ui.openModal; window.closeModal = ui.closeModal;
-            window.sortTable = render.sortTable; window.openWashModal = openWashModal; window.openMeasurementModal = openMeasurementModal;
+            window.openWashModal = openWashModal; window.openMeasurementModal = openMeasurementModal;
             window.openEditModal = openEditModal; window.showChart = showChart; window.generateComprehensiveReport = generateComprehensiveReport;
+
+            document.getElementById('searchInput').addEventListener('input', render.table);
 
             document.getElementById('saveSettingsBtn').addEventListener('click', (e) => ui.handleFormSubmit(e.currentTarget, async () => {
                 const newSettings = {
@@ -697,17 +727,14 @@
                 ui.handleFormSubmit(e.currentTarget.querySelector('button'), async () => {
                     const id = document.getElementById('editAniloxId').value;
                     const updatedData = {
-                        bcm_original: parseFloat(document.getElementById('editBcmOriginal').value),
-                        lineatura: document.getElementById('editLineatura').value.trim(),
                         estado: document.getElementById('editEstado').value.trim()
                     };
-                    if (isNaN(updatedData.bcm_original) || !updatedData.lineatura) throw new Error('BCM e Lineatura são obrigatórios.');
                     const anilox = aniloxData.find(a => a.id === id);
                     await db.updateAniloxRecord({ id, ...updatedData });
                     Object.assign(anilox, updatedData);
                     render.all();
                     ui.closeModal('editAniloxModal');
-                    ui.showToast('Anilox atualizado!');
+                    ui.showToast('Estado do anilox atualizado!');
                 });
             });
 

@@ -18,17 +18,16 @@
             --bg-light: #f4f6f9; --bg-card: #ffffff; --text-dark: #333333; --text-light: #6c757d; --text-white: #ffffff;
             --border: #dee2e6; --card-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
             --font-primary: 'Poppins', sans-serif; --font-mono: 'JetBrains Mono', monospace;
-            --success-rgb: 32, 201, 151; --warning-rgb: 255, 193, 7; --danger-rgb: 232, 74, 95;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { font-size: 16px; }
+        html { font-size: 16px; scroll-behavior: smooth; }
         body {
             font-family: var(--font-primary); line-height: 1.6; color: var(--text-dark);
             background-color: var(--bg-light); padding: 20px;
             -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
         }
         .main-container {
-            max-width: 1500px; margin: 10px auto; background-color: var(--bg-card);
+            max-width: 1600px; margin: 10px auto; background-color: var(--bg-card);
             padding: 30px 40px; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--card-shadow);
         }
         .header {
@@ -74,30 +73,32 @@
             font-family: var(--font-mono); font-weight: 500; font-size: 0.8rem;
             color: var(--text-light); margin-bottom: 8px; text-transform: uppercase;
         }
-        input[type="text"], input[type="number"], input[type="date"] {
+        input[type="text"], input[type="number"], input[type="date"], textarea {
             padding: 12px 15px; border: 1px solid var(--border); border-radius: 6px;
             font-size: 0.95rem; font-family: var(--font-mono); background-color: #fff;
             color: var(--text-dark); width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
-        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36, 99, 235, 0.2); }
+        textarea { resize: vertical; min-height: 80px; }
+        input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36, 99, 235, 0.2); }
         
         button {
             background-color: var(--primary); color: var(--text-white); border: none;
             padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
             font-weight: 600; font-family: var(--font-primary); text-transform: uppercase;
             letter-spacing: 0.8px; transition: all 0.2s ease-in-out; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         }
-        button:hover { background-color: var(--secondary); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); transform: translateY(-2px); }
-        button.btn-danger { background-color: var(--danger); }
-        button.btn-danger:hover { background-color: #c2303f; }
-        button.btn-info { background-color: #17a2b8; }
-        button.btn-info:hover { background-color: #138496; }
-        button.btn-secondary { background-color: var(--text-light); }
-        button.btn-secondary:hover { background-color: var(--text-dark); }
-        button.btn-success { background-color: var(--success); }
-        button.btn-success:hover { background-color: #198754; }
+        button:hover:not(:disabled) { background-color: var(--secondary); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); transform: translateY(-2px); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover:not(:disabled) { background-color: #c2303f; }
         .btn-small { padding: 6px 12px; font-size: 0.75rem; margin: 0; width: 100%; }
-        
+        .spinner {
+            width: 18px; height: 18px; border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .table-container {
             overflow-x: auto; border: 1px solid var(--border); border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; max-height: 70vh;
@@ -113,13 +114,6 @@
             font-size: 0.75rem; position: sticky; top: 0; z-index: 1; cursor: pointer;
         }
         th .sort-indicator { display: inline-block; margin-left: 8px; opacity: 0.5; }
-        th:hover { background-color: #e9ecef; }
-        tr:last-child td { border-bottom: none; }
-        
-        .status-ok { background-color: rgba(var(--success-rgb), 0.05); }
-        .status-atencao { background-color: rgba(var(--warning-rgb), 0.1); }
-        .status-critico { background-color: rgba(var(--danger-rgb), 0.08); }
-        tr.status-ok:hover, tr.status-atencao:hover, tr.status-critico:hover { background-color: #e9ecef; }
 
         .status-badge {
             padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;
@@ -137,7 +131,7 @@
         }
         .modal-content {
             background-color: var(--bg-card); padding: 30px 40px; border: 1px solid var(--border);
-            border-radius: 12px; box-shadow: var(--card-shadow); width: 90%; max-width: 500px; position: relative;
+            border-radius: 12px; box-shadow: var(--card-shadow); width: 90%; max-width: 600px; position: relative;
         }
         .modal-content.modal-xl { max-width: 90vw; }
         .modal-header {
@@ -147,25 +141,58 @@
         .modal-header h2 { margin: 0; border: none; padding: 0; font-size: 1.3rem; }
         .close-button { color: var(--text-light); font-size: 2rem; font-weight: bold; cursor: pointer; line-height: 1; }
         .close-button:hover { color: var(--danger); }
-        .modal-body form { display: flex; flex-direction: column; gap: 20px; }
         #chart-container { position: relative; height: 60vh; width: 100%; }
-        #reportResults .placeholder, #aniloxTableBody .placeholder { color: var(--text-light); text-align: center; padding: 40px; font-style: italic; }
-        #settings-feedback { color: var(--success); font-weight: 600; margin-left: 15px; opacity: 0; transition: opacity 0.3s; }
+        .placeholder { color: var(--text-light); text-align: center; padding: 40px; font-style: italic; }
 
-        @media (max-width: 768px) {
-            body { padding: 10px; }
-            .main-container { padding: 20px; }
-            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
-            h1 { font-size: 1.4rem; flex-wrap: wrap; }
-            .controls-grid { grid-template-columns: 1fr; }
-            table { font-size: 0.8rem; }
-            th, td { padding: 10px; }
-            button { width: 100%; }
-            .btn-small { width: auto; display: inline-block; }
+        #toast-container {
+            position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px;
         }
+        .toast {
+            padding: 15px 20px; border-radius: 8px; color: var(--text-white);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-weight: 500;
+            opacity: 0; transform: translateX(100%); animation: slideIn 0.5s forwards; min-width: 250px;
+        }
+        .toast.success { background-color: var(--success); }
+        .toast.error { background-color: var(--danger); }
+        @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOut { to { opacity: 0; transform: translateX(100%); } }
+
+        #dashboard-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;
+        }
+        .kpi-card {
+            background-color: var(--bg-light); padding: 25px; border-radius: 8px;
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); }
+        .kpi-card .value { font-size: 2.5rem; font-weight: 700; color: var(--text-dark); }
+        .kpi-card .label { font-size: 1rem; font-weight: 500; color: var(--text-light); }
+        
+        .performance-card {
+            background-color: #fff; padding: 25px; border-radius: 8px;
+            border: 1px solid var(--border); grid-column: 1 / -1; margin-top: 15px;
+        }
+        .weekly-progress-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;
+            text-align: center; margin-top: 10px;
+        }
+        .day-progress-item {
+            background-color: var(--bg-light); padding: 15px; border-radius: 8px;
+        }
+        .day-label {
+            font-weight: 600; color: var(--text-dark); font-size: 0.9rem;
+        }
+        .day-progress {
+            font-weight: 700; font-size: 1.5rem; margin-top: 8px; font-family: var(--font-mono);
+        }
+        .day-progress.goal-met { color: var(--success); }
+        .day-progress.goal-not-met { color: var(--secondary); }
     </style>
 </head>
 <body>
+
+    <div id="toast-container"></div>
 
     <div class="main-container">
         <div class="header">
@@ -174,12 +201,18 @@
         </div>
 
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab(event,'aniloxTab')">Anilox</button>
-            <button class="nav-tab" onclick="showTab(event,'reportTab')">Relatório de Lavagens</button>
+            <button class="nav-tab active" onclick="showTab(event,'dashboardTab')">Dashboard</button>
+            <button class="nav-tab" onclick="showTab(event,'aniloxTab')">Anilox</button>
+            <button class="nav-tab" onclick="showTab(event,'reportTab')">Relatório de Performance</button>
             <button class="nav-tab" onclick="showTab(event,'settingsTab')">Configurações</button>
         </div>
 
-        <div id="aniloxTab" class="tab-content active">
+        <div id="dashboardTab" class="tab-content active">
+            <h2>Dashboard Estratégico</h2>
+            <div id="dashboard-grid"></div>
+        </div>
+
+        <div id="aniloxTab" class="tab-content">
             <h2>Lista de Anilox</h2>
             <div class="table-container">
                 <table>
@@ -190,6 +223,7 @@
                             <th onclick="sortTable('bcm_atual')">BCM Atual<span class="sort-indicator"></span></th>
                             <th onclick="sortTable('vida_util')">% Vida Útil<span class="sort-indicator"></span></th>
                             <th onclick="sortTable('lineatura')">Lineatura<span class="sort-indicator"></span></th>
+                            <th onclick="sortTable('estado')">Estado<span class="sort-indicator"></span></th>
                             <th onclick="sortTable('ultima_atividade')">Últ. Atividade<span class="sort-indicator"></span></th>
                             <th>Status Volume</th>
                             <th>Status Limpeza</th>
@@ -202,7 +236,7 @@
         </div>
 
         <div id="reportTab" class="tab-content">
-            <h2>Relatório de Frequência de Lavagens</h2>
+            <h2>Relatório de Performance por Período</h2>
             <div class="controls-section">
                 <div class="controls-grid">
                     <div class="input-group">
@@ -213,45 +247,25 @@
                         <label for="endDate">Data de Fim</label>
                         <input type="date" id="endDate">
                     </div>
-                    <button onclick="generateWashReport()">Gerar Relatório</button>
+                    <button onclick="generateComprehensiveReport()">Gerar Análise</button>
                 </div>
             </div>
             <div id="reportResults">
-                <p class="placeholder">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>
+                <p class="placeholder">Selecione um período para ver a performance detalhada.</p>
             </div>
         </div>
 
         <div id="settingsTab" class="tab-content">
-            <h2>Configurações de Alerta de Volume</h2>
+            <h2>Configurações de Alerta</h2>
             <div class="controls-section">
                 <div class="controls-grid">
-                    <div class="input-group">
-                        <label for="attentionThreshold">Atenção se BCM for menor que (% original):</label>
-                        <input type="number" id="attentionThreshold">
-                    </div>
-                    <div class="input-group">
-                        <label for="criticalThreshold">Crítico (Regravar) se BCM for menor que (% original):</label>
-                        <input type="number" id="criticalThreshold">
-                    </div>
+                    <div class="input-group"><label for="attentionThreshold">% BCM para Atenção:</label><input type="number" id="attentionThreshold" required></div>
+                    <div class="input-group"><label for="criticalThreshold">% BCM para Crítico:</label><input type="number" id="criticalThreshold" required></div>
+                    <div class="input-group"><label for="washAttentionDays">Dias p/ Limpeza Atenção:</label><input type="number" id="washAttentionDays" required></div>
+                    <div class="input-group"><label for="washCriticalDays">Dias p/ Limpeza Crítica:</label><input type="number" id="washCriticalDays" required></div>
                 </div>
             </div>
-            <h2>Configurações de Alerta de Limpeza</h2>
-            <div class="controls-section">
-                <div class="controls-grid">
-                    <div class="input-group">
-                        <label for="washAttentionDays">Atenção após (dias sem limpar):</label>
-                        <input type="number" id="washAttentionDays">
-                    </div>
-                    <div class="input-group">
-                        <label for="washCriticalDays">Crítico após (dias sem limpar):</label>
-                        <input type="number" id="washCriticalDays">
-                    </div>
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <button id="saveSettingsBtn">Salvar Configurações</button>
-                <span id="settings-feedback"></span>
-            </div>
+            <button id="saveSettingsBtn">Salvar Configurações</button>
             <h2 style="margin-top: 40px;">Gerenciamento de Dados</h2>
             <div class="controls-section">
                  <button id="resetData" class="btn-danger">Resetar Todos os Dados</button>
@@ -263,6 +277,7 @@
     <div id="addAniloxModal" class="modal-overlay"></div>
     <div id="chartModal" class="modal-overlay"></div>
     <div id="addWashModal" class="modal-overlay"></div>
+    <div id="editAniloxModal" class="modal-overlay"></div>
 
     <script>
         const SUPABASE_URL = 'https://qonapwpnnknvnhvjysjc.supabase.co';
@@ -271,223 +286,250 @@
 
         let aniloxData = [];
         let settings = {};
-        let chartInstance = null;
+        const charts = {};
         let currentSort = { column: 'id', direction: 'asc' };
 
-        const defaultSettings = {
-            attention: 90,
-            critical: 80,
-            washAttention: 3,
-            washCritical: 7
-        };
+        const defaultSettings = { attention: 90, critical: 80, washAttention: 3, washCritical: 7 };
 
         const db = {
-            fetchAniloxData: async () => {
-                const { data, error } = await supabaseClient.from('anilox').select('*');
-                if (error) { console.error("Erro ao buscar dados do anilox:", error); return []; }
-                return data;
-            },
-            updateAniloxRecord: async (anilox) => {
-                const { data, error } = await supabaseClient.from('anilox').update(anilox).eq('id', anilox.id).select();
-                if (error) { console.error("Erro ao atualizar anilox:", error); throw error; }
-                return data;
-            },
-            addAniloxRecord: async (anilox) => {
-                const { data, error } = await supabaseClient.from('anilox').insert(anilox).select();
-                if (error) { console.error("Erro ao adicionar anilox:", error); throw error; }
-                return data;
-            },
-            fetchSettings: async () => {
-                const { data, error } = await supabaseClient.from('settings').select('config').eq('id', 1).single();
-                if (error || !data) { return defaultSettings; }
-                return data.config;
-            },
-            saveSettings: async (settings) => {
-                const { error } = await supabaseClient.from('settings').upsert({ id: 1, config: settings });
-                if (error) console.error("Erro ao salvar configurações:", error);
-            },
+            fetchAniloxData: async () => (await supabaseClient.from('anilox').select('*')).data || [],
+            updateAniloxRecord: async (anilox) => (await supabaseClient.from('anilox').update(anilox).eq('id', anilox.id).select()).data,
+            addAniloxRecord: async (anilox) => (await supabaseClient.from('anilox').insert(anilox).select()).data,
+            fetchSettings: async () => ((await supabaseClient.from('settings').select('config').eq('id', 1).single()).data?.config) || defaultSettings,
+            saveSettings: async (config) => await supabaseClient.from('settings').upsert({ id: 1, config }),
             resetAllData: async () => {
-                const { error: aniloxError } = await supabaseClient.from('anilox').delete().neq('id', 'dummy_id_to_delete_all');
-                const { error: settingsError } = await supabaseClient.from('settings').delete().eq('id', 1);
-                if(aniloxError) console.error("Erro ao deletar anilox:", aniloxError);
-                if(settingsError) console.error("Erro ao deletar settings:", settingsError);
+                await supabaseClient.from('anilox').delete().neq('id', 'dummy');
+                await supabaseClient.from('settings').delete().eq('id', 1);
             }
         };
         
-        function showTab(evt, tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            evt.currentTarget.classList.add('active');
-        }
-
-        function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-
-        function populateSettingsForm(settings) {
-            document.getElementById('attentionThreshold').value = settings.attention;
-            document.getElementById('criticalThreshold').value = settings.critical;
-            document.getElementById('washAttentionDays').value = settings.washAttention;
-            document.getElementById('washCriticalDays').value = settings.washCritical;
-        }
-
-        function sortTable(column) {
-            if (currentSort.column === column) {
-                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort.column = column;
-                currentSort.direction = 'asc';
-            }
-            renderTable();
-        }
-
-        function renderTable() {
-            const tableBody = document.getElementById('aniloxTableBody');
-            tableBody.innerHTML = '';
-            
-            if (aniloxData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="placeholder">Nenhum anilox cadastrado.</td></tr>`;
-                return;
-            }
-
-            const getSortValue = (anilox, column) => {
-                const latestMeasurement = anilox.historico.length > 0 ? anilox.historico[anilox.historico.length - 1] : { bcmAtual: -1, data: null };
-                const latestWash = anilox.lavagens.length > 0 ? anilox.lavagens.sort().reverse()[0] : null;
-                const lastActivityDateStr = latestWash && (!latestMeasurement.data || new Date(latestWash) > new Date(latestMeasurement.data)) ? latestWash : latestMeasurement.data;
-
-                switch (column) {
-                    case 'id': return isNaN(parseInt(anilox.id, 10)) ? anilox.id : parseInt(anilox.id, 10);
-                    case 'bcm_original': return anilox.bcm_original;
-                    case 'bcm_atual': return latestMeasurement.bcmAtual;
-                    case 'vida_util': return (latestMeasurement.bcmAtual / anilox.bcm_original) * 100;
-                    case 'lineatura': return anilox.lineatura;
-                    case 'ultima_atividade': return lastActivityDateStr ? new Date(lastActivityDateStr) : new Date(0);
-                    default: return anilox.id;
+        const ui = {
+            showTab: (evt, tabId) => {
+                document.querySelectorAll('.tab-content, .nav-tab').forEach(el => el.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                evt.currentTarget.classList.add('active');
+            },
+            openModal: (modalId) => document.getElementById(modalId).style.display = 'flex',
+            closeModal: (modalId) => document.getElementById(modalId).style.display = 'none',
+            showToast: (message, type = 'success') => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.5s forwards';
+                    toast.addEventListener('animationend', () => toast.remove());
+                }, 3000);
+            },
+            handleFormSubmit: async (button, action) => {
+                const originalContent = button.innerHTML;
+                button.innerHTML = `<div class="spinner"></div>`;
+                button.disabled = true;
+                try {
+                    await action();
+                } catch (error) {
+                    console.error("Erro na operação:", error);
+                    ui.showToast(error.message || 'Ocorreu um erro.', 'error');
+                } finally {
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
                 }
-            };
+            }
+        };
 
-            const sortedData = [...aniloxData].sort((a, b) => {
-                const valA = getSortValue(a, currentSort.column);
-                const valB = getSortValue(b, currentSort.column);
+        const render = {
+            all: () => {
+                render.dashboard();
+                render.table();
+            },
+            populateSettingsForm: (s) => {
+                document.getElementById('attentionThreshold').value = s.attention;
+                document.getElementById('criticalThreshold').value = s.critical;
+                document.getElementById('washAttentionDays').value = s.washAttention;
+                document.getElementById('washCriticalDays').value = s.washCritical;
+            },
+            sortTable: (column) => {
+                currentSort.column = column === currentSort.column ? (currentSort.direction === 'asc' ? 'desc' : 'asc') : 'asc';
+                render.table();
+            },
+            dashboard: () => {
+                const grid = document.getElementById('dashboard-grid');
+                if (!aniloxData || aniloxData.length === 0) {
+                    grid.innerHTML = `<p class="placeholder" style="grid-column: 1 / -1;">Sem dados para exibir.</p>`;
+                    return;
+                }
+
+                const today = new Date();
+                today.setUTCHours(0, 0, 0, 0);
+                const dailyWashGoal = 8;
                 
-                if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
-                if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-
-            document.querySelectorAll('th .sort-indicator').forEach(el => el.textContent = '');
-            const activeTh = document.querySelector(`th[onclick="sortTable('${currentSort.column}')"] .sort-indicator`);
-            if (activeTh) {
-                activeTh.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
-            }
-
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            sortedData.forEach(anilox => {
-                const latestMeasurement = anilox.historico.length > 0 ? anilox.historico[anilox.historico.length - 1] : { bcmAtual: 'N/A', data: null };
-                const life = (latestMeasurement.bcmAtual / anilox.bcm_original) * 100;
-
-                let volStatusClass = '';
-                let volStatusBadge = `<span class="status-badge status-na">N/A</span>`;
-                if (!isNaN(life)) {
-                    if (life < settings.critical) { 
-                        volStatusBadge = `<span class="status-badge status-critico">Crítico</span>`;
-                        volStatusClass = 'status-critico';
-                    } else if (life < settings.attention) { 
-                        volStatusBadge = `<span class="status-badge status-atencao">Atenção</span>`;
-                        volStatusClass = 'status-atencao';
-                    } else {
-                        volStatusBadge = `<span class="status-badge status-ok">OK</span>`;
-                        volStatusClass = 'status-ok';
-                    }
+                let criticalVolumeCount = 0;
+                let criticalCleaningCount = 0;
+                let totalLife = 0;
+                let measuredCount = 0;
+                
+                const weeklyWashCounts = new Map();
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(today.getDate() - i);
+                    weeklyWashCounts.set(date.toISOString().slice(0, 10), 0);
                 }
 
-                const latestWash = anilox.lavagens.length > 0 ? anilox.lavagens.sort().reverse()[0] : null;
-                const lastActivityDateStr = latestWash && (!latestMeasurement.data || new Date(latestWash) > new Date(latestMeasurement.data)) ? latestWash : latestMeasurement.data;
-
-                let washStatusBadge = `<span class="status-badge status-ok">OK</span>`;
-                let lastActivityDateFormatted = "N/A";
-
-                if (lastActivityDateStr) {
-                    const lastActivityDate = new Date(lastActivityDateStr);
-                    lastActivityDate.setUTCHours(12,0,0,0);
-                    lastActivityDateFormatted = lastActivityDate.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-                    const diffTime = today - lastActivityDate;
-                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-                    if (diffDays >= settings.washCritical) {
-                        washStatusBadge = `<span class="status-badge status-critico">Crítico (${diffDays}d)</span>`;
-                    } else if (diffDays >= settings.washAttention) {
-                        washStatusBadge = `<span class="status-badge status-atencao">Atenção (${diffDays}d)</span>`;
+                aniloxData.forEach(a => {
+                    const latestMeasurement = a.historico.length > 0 ? a.historico.slice().sort((d1, d2) => new Date(d2.data) - new Date(d1.data))[0] : null;
+                    if (latestMeasurement) {
+                        const life = (latestMeasurement.bcmAtual / a.bcm_original) * 100;
+                        totalLife += life;
+                        measuredCount++;
+                        if (life < settings.critical) criticalVolumeCount++;
                     }
-                }
 
-                const row = document.createElement('tr');
-                row.className = volStatusClass;
-                row.innerHTML = `
-                    <td><strong>${anilox.id}</strong></td>
-                    <td>${anilox.bcm_original.toFixed(1)}</td>
-                    <td>${typeof latestMeasurement.bcmAtual === 'number' ? latestMeasurement.bcmAtual.toFixed(1) : 'N/A'}</td>
-                    <td>${!isNaN(life) ? life.toFixed(1) + '%' : 'N/A'}</td>
-                    <td>${anilox.lineatura}</td>
-                    <td>${lastActivityDateFormatted}</td>
-                    <td>${volStatusBadge}</td>
-                    <td>${washStatusBadge}</td>
-                    <td>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
-                            <button class="btn-small btn-success" onclick="openWashModal('${anilox.id}')">Lavar</button>
-                            <button class="btn-small btn-info" onclick="openMeasurementModal('${anilox.id}')">Medir</button>
+                    const latestWash = a.lavagens.length > 0 ? a.lavagens.sort().reverse()[0] : null;
+                    if (latestWash) {
+                        const lastActivityDate = new Date(latestWash);
+                        lastActivityDate.setUTCHours(0,0,0,0);
+                        if (Math.floor((today - lastActivityDate) / 86400000) >= settings.washCritical) {
+                            criticalCleaningCount++;
+                        }
+                    }
+                    
+                    a.lavagens.forEach(washDate => {
+                        if (weeklyWashCounts.has(washDate)) {
+                            weeklyWashCounts.set(washDate, weeklyWashCounts.get(washDate) + 1);
+                        }
+                    });
+                });
+
+                const avgLife = measuredCount > 0 ? (totalLife / measuredCount).toFixed(1) : 'N/A';
+                
+                let weeklyProgressHTML = '';
+                let dayIndex = 0;
+                for (const [dateString, count] of weeklyWashCounts) {
+                    const date = new Date(dateString);
+                    let label = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+                    if (dayIndex === 6) label = 'Hoje';
+                    if (dayIndex === 5) label = 'Ontem';
+                    
+                    const goalMetClass = count >= dailyWashGoal ? 'goal-met' : 'goal-not-met';
+                    weeklyProgressHTML += `
+                        <div class="day-progress-item">
+                            <div class="day-label">${label.replace('.', '')}</div>
+                            <div class="day-progress ${goalMetClass}">${count} / ${dailyWashGoal}</div>
                         </div>
-                        <button class="btn-small btn-secondary" style="width: 100%;" onclick="showChart('${anilox.id}')">Histórico</button>
-                    </td>
+                    `;
+                    dayIndex++;
+                }
+                
+                grid.innerHTML = `
+                    <div class="kpi-card" style="border-color: var(--primary);">
+                        <div class="value">${aniloxData.length}</div><div class="label">Total de Anilox</div>
+                    </div>
+                    <div class="kpi-card" style="border-color: var(--success);">
+                        <div class="value">${avgLife}%</div><div class="label">Vida Útil Média</div>
+                    </div>
+                    <div class="kpi-card" style="border-color: var(--danger);">
+                        <div class="value">${criticalVolumeCount}</div><div class="label">Volume Crítico</div>
+                    </div>
+                    <div class="kpi-card" style="border-color: var(--warning);">
+                        <div class="value">${criticalCleaningCount}</div><div class="label">Limpeza Atrasada</div>
+                    </div>
+                    <div class="performance-card">
+                        <h2>Performance de Lavagens (Últimos 7 Dias)</h2>
+                        <div class="weekly-progress-container">${weeklyProgressHTML}</div>
+                    </div>
                 `;
-                tableBody.appendChild(row);
-            });
-        }
+            },
+            createChart: (canvasId, type, labels, datasets) => {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                if (charts[canvasId]) charts[canvasId].destroy();
+                charts[canvasId] = new Chart(ctx, {
+                    type, data: { labels, datasets },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: datasets.length > 1 } }, scales: { y: { beginAtZero: true } } }
+                });
+            },
+            table: () => {
+                const tableBody = document.getElementById('aniloxTableBody');
+                tableBody.innerHTML = aniloxData.length === 0 ? `<tr><td colspan="10" class="placeholder">Nenhum anilox cadastrado.</td></tr>` : '';
+                if(aniloxData.length === 0) return;
 
-        function generateWashReport() {
-            const startDateStr = document.getElementById('startDate').value;
-            const endDateStr = document.getElementById('endDate').value;
-            const resultsDiv = document.getElementById('reportResults');
+                const getSortValue = (a, col) => {
+                    const lm = a.historico.length > 0 ? a.historico.slice().sort((d1, d2) => new Date(d2.data) - new Date(d1.data))[0] : { bcmAtual: -1, data: null };
+                    const lw = a.lavagens.length > 0 ? a.lavagens.sort().reverse()[0] : null;
+                    const lad = lw && (!lm.data || new Date(lw) > new Date(lm.data)) ? lw : lm.data;
+                    switch (col) {
+                        case 'id': return isNaN(parseInt(a.id, 10)) ? a.id : parseInt(a.id, 10);
+                        case 'bcm_original': return a.bcm_original;
+                        case 'bcm_atual': return lm.bcmAtual;
+                        case 'vida_util': return (lm.bcmAtual / a.bcm_original) * 100;
+                        case 'ultima_atividade': return lad ? new Date(lad) : new Date(0);
+                        default: return a[col] || '';
+                    }
+                };
 
-            if (!startDateStr || !endDateStr) {
-                alert('Por favor, selecione as datas de início e fim.');
-                return;
+                const sortedData = [...aniloxData].sort((a, b) => {
+                    const valA = getSortValue(a, currentSort.column);
+                    const valB = getSortValue(b, currentSort.column);
+                    return currentSort.direction === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+                });
+
+                document.querySelectorAll('th .sort-indicator').forEach(el => el.textContent = '');
+                const activeTh = document.querySelector(`th[onclick="sortTable('${currentSort.column}')"] .sort-indicator`);
+                if (activeTh) activeTh.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+
+                const today = new Date();
+                today.setUTCHours(0, 0, 0, 0);
+
+                sortedData.forEach(anilox => {
+                    const latestMeasurement = anilox.historico.length > 0 ? anilox.historico.slice().sort((d1, d2) => new Date(d2.data) - new Date(d1.data))[0] : { bcmAtual: 'N/A', data: null };
+                    const life = (latestMeasurement.bcmAtual / anilox.bcm_original) * 100;
+                    let volStatusBadge = `<span class="status-badge status-na">N/A</span>`;
+                    if (!isNaN(life)) {
+                        if (life < settings.critical) volStatusBadge = `<span class="status-badge status-critico">Crítico</span>`;
+                        else if (life < settings.attention) volStatusBadge = `<span class="status-badge status-atencao">Atenção</span>`;
+                        else volStatusBadge = `<span class="status-badge status-ok">OK</span>`;
+                    }
+
+                    const latestWash = anilox.lavagens.length > 0 ? anilox.lavagens.sort().reverse()[0] : null;
+                    const lastActivityDateStr = latestWash && (!latestMeasurement.data || new Date(latestWash) > new Date(latestMeasurement.data)) ? latestWash : latestMeasurement.data;
+                    let washStatusBadge = `<span class="status-badge status-ok">OK</span>`, lastActivityDateFormatted = "N/A";
+
+                    if (lastActivityDateStr) {
+                        const lastActivityDate = new Date(lastActivityDateStr);
+                        lastActivityDate.setUTCHours(12,0,0,0);
+                        lastActivityDateFormatted = lastActivityDate.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+                        const diffDays = Math.floor((today - lastActivityDate) / 86400000);
+                        if (diffDays >= settings.washCritical) washStatusBadge = `<span class="status-badge status-critico">Crítico (${diffDays}d)</span>`;
+                        else if (diffDays >= settings.washAttention) washStatusBadge = `<span class="status-badge status-atencao">Atenção (${diffDays}d)</span>`;
+                    }
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${anilox.id}</strong></td> <td>${anilox.bcm_original.toFixed(1)}</td>
+                        <td>${typeof latestMeasurement.bcmAtual === 'number' ? latestMeasurement.bcmAtual.toFixed(1) : 'N/A'}</td>
+                        <td>${!isNaN(life) ? life.toFixed(1) + '%' : 'N/A'}</td> <td>${anilox.lineatura}</td>
+                        <td style="max-width: 200px; white-space: pre-wrap; text-align: left;">${anilox.estado || 'N/A'}</td>
+                        <td>${lastActivityDateFormatted}</td> <td>${volStatusBadge}</td> <td>${washStatusBadge}</td>
+                        <td>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
+                                <button class="btn-small" style="background-color: var(--success);" onclick="openWashModal('${anilox.id}')">Lavar</button>
+                                <button class="btn-small" style="background-color: var(--primary);" onclick="openMeasurementModal('${anilox.id}')">Medir</button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                                <button class="btn-small" onclick="openEditModal('${anilox.id}')">Editar</button>
+                                <button class="btn-small" style="background-color: var(--text-light);" onclick="showChart('${anilox.id}')">Histórico</button>
+                            </div>
+                        </td>`;
+                    tableBody.appendChild(row);
+                });
             }
-
-            const startDate = new Date(startDateStr + 'T00:00:00');
-            const endDate = new Date(endDateStr + 'T23:59:59');
-
-            const reportData = aniloxData
-                .map(anilox => {
-                    const washCount = anilox.lavagens.filter(washDateStr => {
-                        const washDate = new Date(washDateStr + 'T12:00:00');
-                        return washDate >= startDate && washDate <= endDate;
-                    }).length;
-                    return { id: anilox.id, count: washCount };
-                })
-                .filter(item => item.count > 0)
-                .sort((a, b) => b.count - a.count);
-
-            if (reportData.length === 0) {
-                resultsDiv.innerHTML = `<p class="placeholder">Nenhuma lavagem registrada no período selecionado.</p>`;
-                return;
-            }
-
-            let tableHTML = `<div class="table-container"><table><thead><tr><th>Nº do Anilox</th><th>Nº de Lavagens no Período</th></tr></thead><tbody>`;
-            reportData.forEach(item => {
-                tableHTML += `<tr><td>${item.id}</td><td>${item.count}</td></tr>`;
-            });
-            tableHTML += `</tbody></table></div>`;
-            resultsDiv.innerHTML = tableHTML;
-        }
+        };
 
         function openWashModal(id) {
             document.getElementById('washAniloxId').value = id;
             document.getElementById('modalWashAniloxId').textContent = id;
             document.getElementById('washDate').valueAsDate = new Date();
-            openModal('addWashModal');
+            ui.openModal('addWashModal');
         }
 
         function openMeasurementModal(id) {
@@ -495,135 +537,181 @@
             document.getElementById('modalAniloxId').textContent = id;
             document.getElementById('bcmAtualInput').value = '';
             document.getElementById('measurementDate').valueAsDate = new Date();
-            openModal('addMeasurementModal');
+            ui.openModal('addMeasurementModal');
+        }
+
+        function openEditModal(id) {
+            const anilox = aniloxData.find(a => a.id === id);
+            if (!anilox) return;
+            document.getElementById('editAniloxId').value = anilox.id;
+            document.getElementById('modalEditAniloxId').textContent = anilox.id;
+            document.getElementById('editBcmOriginal').value = anilox.bcm_original;
+            document.getElementById('editLineatura').value = anilox.lineatura;
+            document.getElementById('editEstado').value = anilox.estado || '';
+            ui.openModal('editAniloxModal');
         }
 
         function showChart(id) {
             const anilox = aniloxData.find(a => a.id === id);
-            if (!anilox) return;
-
+            if (!anilox || anilox.historico.length === 0) return ui.showToast('Nenhum histórico de medição para este anilox.', 'error');
             const sortedHistory = [...anilox.historico].sort((a, b) => new Date(a.data) - new Date(b.data));
-            const labels = sortedHistory.map(h => new Date(h.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'}));
-            const dataPoints = sortedHistory.map(h => h.bcmAtual);
-            const criticalThresholdValue = anilox.bcm_original * (settings.critical / 100);
-            const ctx = document.getElementById('aniloxChart').getContext('2d');
-            if (chartInstance) { chartInstance.destroy(); }
+            const datasets = [
+                { label: 'BCM Atual', data: sortedHistory.map(h => h.bcmAtual), borderColor: 'var(--primary)', backgroundColor: 'rgba(36, 99, 235, 0.1)', tension: 0.1, fill: true },
+                { label: 'BCM Original', data: Array(sortedHistory.length).fill(anilox.bcm_original), borderColor: 'var(--success)', borderDash: [5, 5], pointRadius: 0, fill: false },
+                { label: 'Limite Crítico', data: Array(sortedHistory.length).fill(anilox.bcm_original * (settings.critical / 100)), borderColor: 'var(--danger)', borderDash: [5, 5], pointRadius: 0, fill: false }
+            ];
+            document.getElementById('chartModalTitle').innerText = `Histórico de Volume do Anilox Nº ${anilox.id}`;
+            render.createChart('aniloxChart', 'line', sortedHistory.map(h => new Date(h.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'})), datasets);
+            ui.openModal('chartModal');
+        }
 
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'BCM Atual', data: dataPoints, borderColor: 'var(--primary)', backgroundColor: 'rgba(36, 99, 235, 0.1)', tension: 0.1, fill: true },
-                        { label: 'BCM Original', data: Array(labels.length).fill(anilox.bcm_original), borderColor: 'var(--success)', borderDash: [5, 5], pointRadius: 0, fill: false },
-                        { label: 'Limite Crítico', data: Array(labels.length).fill(criticalThresholdValue), borderColor: 'var(--danger)', borderDash: [5, 5], pointRadius: 0, fill: false }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Histórico de Volume do Anilox Nº ${anilox.id}`, font: { family: 'var(--font-primary)', size: 16 } } },
-                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Volume (BCM)' } } }
-                }
+        function generateComprehensiveReport() {
+            const startDateStr = document.getElementById('startDate').value;
+            const endDateStr = document.getElementById('endDate').value;
+            if (!startDateStr || !endDateStr) return ui.showToast('Selecione as datas de início e fim.', 'error');
+
+            const startUTC = new Date(startDateStr); startUTC.setUTCHours(0,0,0,0);
+            const endUTC = new Date(endDateStr); endUTC.setUTCHours(23,59,59,999);
+            const resultsDiv = document.getElementById('reportResults');
+
+            const reportData = aniloxData.map(anilox => {
+                const sortedHistory = anilox.historico.slice().sort((a,b) => new Date(a.data) - new Date(b.data));
+                const washesInPeriod = anilox.lavagens.filter(w => { const d = new Date(w); return d >= startUTC && d <= endUTC; }).length;
+                const measurementsInPeriod = sortedHistory.filter(h => { const d = new Date(h.data); return d >= startUTC && d <= endUTC; });
+                if (washesInPeriod === 0 && measurementsInPeriod.length === 0) return null;
+
+                const lastMeasurementBefore = sortedHistory.filter(h => new Date(h.data) < startUTC).pop();
+                const initialBCM = measurementsInPeriod[0]?.bcmAtual || lastMeasurementBefore?.bcmAtual;
+                const finalBCM = measurementsInPeriod.length > 0 ? measurementsInPeriod[measurementsInPeriod.length - 1].bcmAtual : initialBCM;
+                const loss = (initialBCM && finalBCM) ? initialBCM - finalBCM : 0;
+                return { id: anilox.id, washCount: washesInPeriod, measurementCount: measurementsInPeriod.length, initialBCM, finalBCM, loss };
+            }).filter(Boolean);
+
+            resultsDiv.innerHTML = `<h3 style="margin-bottom: 15px;">Análise de ${startUTC.toLocaleDateString()} a ${endUTC.toLocaleDateString()}</h3>`;
+            if (reportData.length === 0) {
+                resultsDiv.innerHTML += `<p class="placeholder">Nenhuma atividade registrada no período.</p>`;
+                return;
+            }
+            let tableHTML = `<div class="table-container"><table><thead><tr>
+                <th>Nº Anilox</th><th>Lavagens</th><th>Medições</th><th>Volume Inicial</th><th>Volume Final</th><th>Perda de Volume</th>
+            </tr></thead><tbody>`;
+            reportData.forEach(item => {
+                tableHTML += `<tr>
+                    <td><strong>${item.id}</strong></td> <td>${item.washCount}</td> <td>${item.measurementCount}</td>
+                    <td>${item.initialBCM?.toFixed(2) || 'N/A'}</td> <td>${item.finalBCM?.toFixed(2) || 'N/A'}</td>
+                    <td style="color:${item.loss > 0 ? 'var(--danger)' : 'var(--success)'}; font-weight: 600;">${item.loss.toFixed(2)}</td>
+                </tr>`;
             });
-            document.getElementById('chartModalTitle').innerText = `Histórico do Anilox Nº ${anilox.id}`;
-            openModal('chartModal');
+            resultsDiv.innerHTML += tableHTML + `</tbody></table></div>`;
         }
 
         async function initializeApp() {
-            document.getElementById('addWashModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Registrar Lavagem para Anilox Nº <span id="modalWashAniloxId"></span></h2><span class="close-button" onclick="closeModal('addWashModal')">&times;</span></div><div class="modal-body"><form id="addWashForm"><input type="hidden" id="washAniloxId"><div class="input-group"><label for="washDate">Data da Lavagem</label><input type="date" id="washDate" required></div><button type="submit">Salvar Lavagem</button></form></div></div>`;
-            document.getElementById('addMeasurementModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Adicionar Medição para Anilox Nº <span id="modalAniloxId"></span></h2><span class="close-button" onclick="closeModal('addMeasurementModal')">&times;</span></div><div class="modal-body"><form id="addMeasurementForm"><input type="hidden" id="measurementAniloxId"><div class="input-group"><label for="bcmAtualInput">Novo BCM Atual</label><input type="number" step="0.1" id="bcmAtualInput" required></div><div class="input-group"><label for="measurementDate">Data da Medição</label><input type="date" id="measurementDate" required></div><button type="submit">Salvar Medição</button></form></div></div>`;
-            document.getElementById('addAniloxModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Adicionar Novo Anilox</h2><span class="close-button" onclick="closeModal('addAniloxModal')">&times;</span></div><div class="modal-body"><form id="addAniloxForm"><div class="input-group"><label for="newAniloxId">Nº do Anilox</label><input type="text" id="newAniloxId" required></div><div class="input-group"><label for="newBcmOriginal">BCM Original</label><input type="number" step="0.1" id="newBcmOriginal" required></div><div class="input-group"><label for="newLineatura">Lineatura</label><input type="text" id="newLineatura" required></div><hr><p>Primeira medição:</p><div class="input-group"><label for="newBcmAtual">BCM Atual</label><input type="number" step="0.1" id="newBcmAtual" required></div><div class="input-group"><label for="newMeasurementDate">Data da Medição</label><input type="date" id="newMeasurementDate" required></div><button type="submit">Salvar Novo Anilox</button></form></div></div>`;
-            document.getElementById('chartModal').innerHTML = `<div class="modal-content modal-xl"><div class="modal-header"><h2 id="chartModalTitle">Histórico do Anilox</h2><span class="close-button" onclick="closeModal('chartModal')">&times;</span></div><div class="modal-body"><div id="chart-container"><canvas id="aniloxChart"></canvas></div></div>`;
+            document.getElementById('addWashModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Registrar Lavagem (Nº <span id="modalWashAniloxId"></span>)</h2><span class="close-button" onclick="ui.closeModal('addWashModal')">&times;</span></div><form id="addWashForm" class="modal-body"><input type="hidden" id="washAniloxId"><div class="input-group"><label for="washDate">Data da Lavagem</label><input type="date" id="washDate" required></div><button type="submit">Salvar</button></form></div>`;
+            document.getElementById('addMeasurementModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Adicionar Medição (Nº <span id="modalAniloxId"></span>)</h2><span class="close-button" onclick="ui.closeModal('addMeasurementModal')">&times;</span></div><form id="addMeasurementForm" class="modal-body"><input type="hidden" id="measurementAniloxId"><div class="input-group"><label for="bcmAtualInput">Novo BCM</label><input type="number" step="0.1" id="bcmAtualInput" required></div><div class="input-group"><label for="measurementDate">Data</label><input type="date" id="measurementDate" required></div><button type="submit">Salvar</button></form></div>`;
+            document.getElementById('addAniloxModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Adicionar Anilox</h2><span class="close-button" onclick="ui.closeModal('addAniloxModal')">&times;</span></div><form id="addAniloxForm" class="modal-body"><div class="input-group"><label for="newAniloxId">Nº</label><input type="text" id="newAniloxId" required></div><div class="input-group"><label for="newBcmOriginal">BCM Original</label><input type="number" step="0.1" id="newBcmOriginal" required></div><div class="input-group"><label for="newLineatura">Lineatura</label><input type="text" id="newLineatura" required></div><div class="input-group"><label for="newEstado">Estado</label><textarea id="newEstado" placeholder="Arranhões, manchas, etc."></textarea></div><hr><p>Primeira medição:</p><div class="input-group"><label for="newBcmAtual">BCM Atual</label><input type="number" step="0.1" id="newBcmAtual" required></div><div class="input-group"><label for="newMeasurementDate">Data Medição</label><input type="date" id="newMeasurementDate" required></div><button type="submit">Salvar</button></form></div>`;
+            document.getElementById('chartModal').innerHTML = `<div class="modal-content modal-xl"><div class="modal-header"><h2 id="chartModalTitle">Histórico</h2><span class="close-button" onclick="ui.closeModal('chartModal')">&times;</span></div><div class="modal-body" id="chart-container"><canvas id="aniloxChart"></canvas></div></div>`;
+            document.getElementById('editAniloxModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Editar Anilox Nº <span id="modalEditAniloxId"></span></h2><span class="close-button" onclick="ui.closeModal('editAniloxModal')">&times;</span></div><form id="editAniloxForm" class="modal-body"><input type="hidden" id="editAniloxId"><div class="input-group"><label for="editBcmOriginal">BCM Original</label><input type="number" step="0.1" id="editBcmOriginal" required></div><div class="input-group"><label for="editLineatura">Lineatura</label><input type="text" id="editLineatura" required></div><div class="input-group"><label for="editEstado">Estado</label><textarea id="editEstado"></textarea></div><button type="submit">Salvar</button></form></div>`;
+            
+            [settings, aniloxData] = await Promise.all([db.fetchSettings(), db.fetchAniloxData()]);
+            render.populateSettingsForm(settings);
+            render.all();
 
-            settings = await db.fetchSettings();
-            aniloxData = await db.fetchAniloxData();
-            populateSettingsForm(settings);
-            renderTable();
+            window.showTab = ui.showTab; window.openModal = ui.openModal; window.closeModal = ui.closeModal;
+            window.sortTable = render.sortTable; window.openWashModal = openWashModal; window.openMeasurementModal = openMeasurementModal;
+            window.openEditModal = openEditModal; window.showChart = showChart; window.generateComprehensiveReport = generateComprehensiveReport;
 
-            document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-                settings = {
-                    attention: parseFloat(document.getElementById('attentionThreshold').value),
-                    critical: parseFloat(document.getElementById('criticalThreshold').value),
-                    washAttention: parseInt(document.getElementById('washAttentionDays').value, 10),
-                    washCritical: parseInt(document.getElementById('washCriticalDays').value, 10)
+            document.getElementById('saveSettingsBtn').addEventListener('click', (e) => ui.handleFormSubmit(e.currentTarget, async () => {
+                const newSettings = {
+                    attention: parseFloat(document.getElementById('attentionThreshold').value), critical: parseFloat(document.getElementById('criticalThreshold').value),
+                    washAttention: parseInt(document.getElementById('washAttentionDays').value, 10), washCritical: parseInt(document.getElementById('washCriticalDays').value, 10)
                 };
+                if (Object.values(newSettings).some(isNaN) || newSettings.attention <= newSettings.critical) throw new Error('Valores inválidos. Atenção deve ser > Crítico.');
+                settings = newSettings;
                 await db.saveSettings(settings);
-                renderTable();
-                const feedback = document.getElementById('settings-feedback');
-                feedback.textContent = 'Salvo com sucesso!';
-                feedback.style.opacity = 1;
-                setTimeout(() => { feedback.style.opacity = 0; }, 2000);
-            });
+                render.all();
+                ui.showToast('Configurações salvas!');
+            }));
 
-            document.getElementById('resetData').addEventListener('click', async () => {
-                if (confirm('ATENÇÃO!\nIsso apagará TODOS os dados de anilox e configurações do banco de dados permanentemente. Deseja continuar?')) {
-                    await db.resetAllData();
-                    window.location.reload();
+            document.getElementById('resetData').addEventListener('click', (e) => {
+                if (confirm('ATENÇÃO! Isso apagará TODOS os dados. Deseja continuar?')) {
+                    ui.handleFormSubmit(e.currentTarget, async () => {
+                        await db.resetAllData();
+                        ui.showToast('Dados resetados.');
+                        setTimeout(() => window.location.reload(), 1500);
+                    });
                 }
             });
 
-            document.getElementById('addWashForm').addEventListener('submit', async (e) => {
+            document.getElementById('addWashForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-                const id = document.getElementById('washAniloxId').value;
-                const date = document.getElementById('washDate').value;
-                const anilox = aniloxData.find(a => a.id === id);
-                if (anilox) {
+                ui.handleFormSubmit(e.currentTarget.querySelector('button'), async () => {
+                    const id = document.getElementById('washAniloxId').value, date = document.getElementById('washDate').value;
+                    if (!date) throw new Error('Data é obrigatória.');
+                    const anilox = aniloxData.find(a => a.id === id);
                     anilox.lavagens.push(date);
-                    try {
-                        await db.updateAniloxRecord(anilox);
-                        renderTable();
-                        closeModal('addWashModal');
-                        e.target.reset();
-                    } catch (error) { alert("Falha ao salvar a lavagem."); }
-                }
-            });
-
-            document.getElementById('addMeasurementForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const id = document.getElementById('measurementAniloxId').value;
-                const bcmAtual = parseFloat(document.getElementById('bcmAtualInput').value);
-                const data = document.getElementById('measurementDate').value;
-                const anilox = aniloxData.find(a => a.id === id);
-                if (anilox) {
-                    anilox.historico.push({ data, bcmAtual });
-                    try {
-                        await db.updateAniloxRecord(anilox);
-                        renderTable();
-                        closeModal('addMeasurementModal');
-                        e.target.reset();
-                    } catch (error) {
-                        alert("Falha ao salvar a medição.");
-                        anilox.historico.pop();
-                    }
-                }
-            });
-
-            document.getElementById('addAniloxForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const id = document.getElementById('newAniloxId').value;
-                if (aniloxData.some(a => a.id === id)) {
-                    alert(`Erro: O anilox com Nº ${id} já existe.`);
-                    return;
-                }
-                const newAnilox = {
-                    id: id,
-                    bcm_original: parseFloat(document.getElementById('newBcmOriginal').value),
-                    lineatura: document.getElementById('newLineatura').value,
-                    historico: [{ data: document.getElementById('newMeasurementDate').value, bcmAtual: parseFloat(document.getElementById('newBcmAtual').value) }],
-                    lavagens: []
-                };
-                try {
-                    await db.addAniloxRecord(newAnilox);
-                    aniloxData.push(newAnilox);
-                    renderTable();
-                    closeModal('addAniloxModal');
+                    await db.updateAniloxRecord({ id, lavagens: anilox.lavagens });
+                    render.all();
+                    ui.closeModal('addWashModal');
                     e.target.reset();
-                } catch (error) { alert("Falha ao adicionar novo anilox."); }
+                    ui.showToast('Lavagem registrada!');
+                });
             });
 
-            document.querySelectorAll('.modal-overlay').forEach(modal => {
-                modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); });
+            document.getElementById('addMeasurementForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                ui.handleFormSubmit(e.currentTarget.querySelector('button'), async () => {
+                    const id = document.getElementById('measurementAniloxId').value;
+                    const bcmAtual = parseFloat(document.getElementById('bcmAtualInput').value), data = document.getElementById('measurementDate').value;
+                    if (isNaN(bcmAtual) || !data) throw new Error('BCM e Data são obrigatórios.');
+                    const anilox = aniloxData.find(a => a.id === id);
+                    anilox.historico.push({ data, bcmAtual });
+                    await db.updateAniloxRecord({ id, historico: anilox.historico });
+                    render.all();
+                    ui.closeModal('addMeasurementModal');
+                    e.target.reset();
+                    ui.showToast('Medição salva!');
+                });
             });
+
+            document.getElementById('addAniloxForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                ui.handleFormSubmit(e.currentTarget.querySelector('button'), async () => {
+                    const newAnilox = {
+                        id: document.getElementById('newAniloxId').value.trim(), bcm_original: parseFloat(document.getElementById('newBcmOriginal').value),
+                        lineatura: document.getElementById('newLineatura').value.trim(), estado: document.getElementById('newEstado').value.trim(),
+                        historico: [{ data: document.getElementById('newMeasurementDate').value, bcmAtual: parseFloat(document.getElementById('newBcmAtual').value) }], lavagens: []
+                    };
+                    if (!newAnilox.id || !newAnilox.lineatura || isNaN(newAnilox.bcm_original) || isNaN(newAnilox.historico[0].bcmAtual) || !newAnilox.historico[0].data) throw new Error('Preencha os campos obrigatórios.');
+                    if (aniloxData.some(a => a.id === newAnilox.id)) throw new Error(`O anilox Nº ${newAnilox.id} já existe.`);
+                    const [addedAnilox] = await db.addAniloxRecord(newAnilox);
+                    aniloxData.push(addedAnilox);
+                    render.all();
+                    ui.closeModal('addAniloxModal');
+                    e.target.reset();
+                    ui.showToast('Novo anilox adicionado!');
+                });
+            });
+
+            document.getElementById('editAniloxForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                ui.handleFormSubmit(e.currentTarget.querySelector('button'), async () => {
+                    const id = document.getElementById('editAniloxId').value;
+                    const updatedData = {
+                        bcm_original: parseFloat(document.getElementById('editBcmOriginal').value),
+                        lineatura: document.getElementById('editLineatura').value.trim(),
+                        estado: document.getElementById('editEstado').value.trim()
+                    };
+                    if (isNaN(updatedData.bcm_original) || !updatedData.lineatura) throw new Error('BCM e Lineatura são obrigatórios.');
+                    const anilox = aniloxData.find(a => a.id === id);
+                    await db.updateAniloxRecord({ id, ...updatedData });
+                    Object.assign(anilox, updatedData);
+                    render.all();
+                    ui.closeModal('editAniloxModal');
+                    ui.showToast('Anilox atualizado!');
+                });
+            });
+
+            document.querySelectorAll('.modal-overlay').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) ui.closeModal(modal.id); }));
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);

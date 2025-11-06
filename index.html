@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -625,13 +626,18 @@
                 
                 if (washesInPeriod.length === 0 && measurementsInPeriod.length === 0) return null;
 
-                const lastWashInPeriod = washesInPeriod.length > 0 ? washesInPeriod.sort().pop() : null;
+                // --- INÍCIO DA CORREÇÃO ---
+                const washCount = washesInPeriod.length; // 1. Armazena a contagem correta antes de modificar o array.
+                const lastWashInPeriod = washCount > 0 ? washesInPeriod.sort().pop() : null; // 2. Agora, modifica o array para obter a última data.
+                // --- FIM DA CORREÇÃO ---
+
                 const lastMeasurementBefore = sortedHistory.filter(h => new Date(h.data + 'T12:00:00Z') < startUTC).pop();
                 const initialBCM = measurementsInPeriod[0]?.bcmAtual || lastMeasurementBefore?.bcmAtual;
                 const finalBCM = measurementsInPeriod.length > 0 ? measurementsInPeriod[measurementsInPeriod.length - 1].bcmAtual : initialBCM;
                 const loss = (initialBCM && finalBCM) ? initialBCM - finalBCM : 0;
                 
-                return { id: anilox.id, washCount: washesInPeriod.length, lastWashDate: lastWashInPeriod, measurementCount: measurementsInPeriod.length, initialBCM, finalBCM, loss };
+                // 3. Usa a variável 'washCount' que foi armazenada anteriormente.
+                return { id: anilox.id, washCount: washCount, lastWashDate: lastWashInPeriod, measurementCount: measurementsInPeriod.length, initialBCM, finalBCM, loss };
             }).filter(Boolean);
 
             resultsDiv.innerHTML = `<h3 style="margin-bottom: 15px;">Análise de ${startUTC.toLocaleDateString('pt-BR', {timeZone: 'UTC'})} a ${endUTC.toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</h3>`;
